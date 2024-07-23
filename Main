@@ -1,0 +1,128 @@
+from PyQt5 import QtWidgets
+import sys
+import os
+import simpleaudio as sa
+
+class MusicTherapyApp(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        # Set up window
+        self.setWindowTitle('Music Therapy App')
+        self.setGeometry(100, 100, 400, 400)
+
+        # Create layout
+        self.layout = QtWidgets.QVBoxLayout()
+
+        # Mood selection
+        self.mood_label = QtWidgets.QLabel('Select Mood:')
+        self.layout.addWidget(self.mood_label)
+
+        self.mood_combo = QtWidgets.QComboBox()
+        self.mood_combo.addItems(['Relaxation', 'Energy Boost', 'Focus'])
+        self.layout.addWidget(self.mood_combo)
+
+        # Desired outcome selection
+        self.outcome_label = QtWidgets.QLabel('Select Desired Outcome:')
+        self.layout.addWidget(self.outcome_label)
+
+        self.outcome_combo = QtWidgets.QComboBox()
+        self.outcome_combo.addItems(['Calm', 'Productive', 'Motivated'])
+        self.layout.addWidget(self.outcome_combo)
+
+        # Theme selection
+        self.theme_label = QtWidgets.QLabel('Select Theme:')
+        self.layout.addWidget(self.theme_label)
+
+        self.theme_combo = QtWidgets.QComboBox()
+        self.theme_combo.addItems(['Calm', 'Dark', 'Light'])
+        self.layout.addWidget(self.theme_combo)
+
+        # Generate playlist button
+        self.generate_button = QtWidgets.QPushButton('Generate Playlist')
+        self.generate_button.clicked.connect(self.generate_playlist)
+        self.layout.addWidget(self.generate_button)
+
+        # Song buttons layout
+        self.songs_layout = QtWidgets.QVBoxLayout()
+        self.layout.addLayout(self.songs_layout)
+
+        # Set layout
+        self.setLayout(self.layout)
+
+    def generate_playlist(self):
+        mood = self.mood_combo.currentText()
+        outcome = self.outcome_combo.currentText()
+        theme = self.theme_combo.currentText()
+
+        # Generate a playlist based on the user's mood and desired outcome
+        playlist = self.get_playlist(mood, outcome)
+
+        # Apply the selected theme
+        self.apply_theme(theme)
+
+        # Clear previous song buttons
+        for i in reversed(range(self.songs_layout.count())):
+            widget = self.songs_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Create buttons for each song
+        for song_path in playlist:
+            song_button = QtWidgets.QPushButton(os.path.basename(song_path))
+            song_button.clicked.connect(lambda checked, s=song_path: self.play_song(s))
+            self.songs_layout.addWidget(song_button)
+
+    def get_playlist(self, mood, outcome):
+        # Directory where your audio files are stored
+        audio_dir = 'audio_files'  # This should be relative to the location of main.py
+
+        playlists = {
+            ('Energy Boost', 'Calm'): [os.path.join(audio_dir, 'fly me to the moon.wav'), os.path.join(audio_dir, 'romantic.wav')],
+            ('Energy Boost', 'Productive'): [os.path.join(audio_dir, 'fly me to the moon.wav'),os.path.join(audio_dir, 'Rise & Shine.wav')],
+            ('Energy Boost', 'Motivated'): [os.path.join(audio_dir, 'Productivity Pulse.wav'), os.path.join(audio_dir, 'romantic.wav')],
+            ('Relaxation', 'Productive'): [os.path.join(audio_dir, 'Souvenir dun lieu cher Melodie.wav.wav'),os.path.join(audio_dir, 'Rise and Shine.wav')],
+            ('Relaxation', 'Calm'): [os.path.join(audio_dir, 'Souvenir dun lieu cher Melodie.wav'),os.path.join(audio_dir, 'Christmas Oratorio Part II Sinfonia(Bach).wav')],
+            ('Relaxation', 'Motivated'): [os.path.join(audio_dir, 'Rise & Shine.wav'),os.path.join(audio_dir, 'Stay Cool')],
+            ('Focus', 'Calm'): [os.path.join(audio_dir, 'Whispers on the Breeze.wav'),os.path.join(audio_dir, 'Eternal Moments')],
+            ('Focus', 'Productive'): [os.path.join(audio_dir, 'Whispers on the Breeze.wav'),os.path.join(audio_dir, 'Eternal Moments.wav')],
+            ('Focus', 'Motivated'): [os.path.join(audio_dir, 'Christmas Oratorio Part II Sinfonia(Bach).wav'),os.path.join(audio_dir, 'Stay Cool')],
+
+            # Add more playlists as needed
+        }
+        return playlists.get((mood, outcome), [])
+
+    def play_song(self, song_path):
+        # Play the song using simpleaudio
+        try:
+            print(f'Attempting to play: {song_path}')
+            volume_factor = 0.5
+            wave_obj = sa.WaveObject.from_wave_file(song_path)
+            play_obj = wave_obj.play()
+            play_obj.wait_done()
+            print('Playback started')
+        except Exception as e:
+            print(f'Playback error: {e}')
+
+    def apply_theme(self, theme):
+        # Apply selected theme
+        if theme == 'Calm':
+            # Calming colors (soft blues, greens, and grays)
+            self.setStyleSheet("background-color: #A8DADC; color: #1D3557;")
+        elif theme == 'Dark':
+            self.setStyleSheet("background-color: #2E2E2E; color: white;")
+        elif theme == 'Light':
+            self.setStyleSheet("background-color: #F7F7F7; color: black;")
+        else:
+            self.setStyleSheet("")
+
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    window = MusicTherapyApp()
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
